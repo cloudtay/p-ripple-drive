@@ -135,6 +135,8 @@ if (PHP_SAPI === 'cli') {
 ```
 
 ##### 运行效果
+![display](https://raw.githubusercontent.com/cloudtay/p-ripple-drive/main/assets/display.jpg)
+
 
 ##### 基准测试 PRipple
 
