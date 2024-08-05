@@ -34,7 +34,9 @@
 
 namespace Psc\Drive\Laravel;
 
+use Illuminate\Support\Env;
 use Illuminate\Support\ServiceProvider;
+use function in_array;
 
 class Provider extends ServiceProvider
 {
@@ -47,5 +49,9 @@ class Provider extends ServiceProvider
     {
         $this->commands([PDrive::class]);
         $this->commands([PDriveLast::class]);
+        $coroutineMySQL = Env::get('COROUTINE_MYSQL');
+        if (in_array($coroutineMySQL, [true, 'true', 1, '1', 'on'], true)) {
+            $this->app->singleton('db.factory', fn() => (new Coroutine\MySQL())->getFactory($this->app));
+        }
     }
 }
