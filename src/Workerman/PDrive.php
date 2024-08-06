@@ -208,7 +208,7 @@ class PDrive implements EventInterface
             self::$baseProcessId = posix_getpid();
             try {
                 cancelAll();
-                System::Process()->noticeFork();
+                System::Process()->forked();
             } catch (UnsupportedFeatureException $e) {
                 Output::error($e->getMessage());
             }

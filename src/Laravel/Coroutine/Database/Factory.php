@@ -32,50 +32,41 @@
  * 由于软件或软件的使用或其他交易而引起的任何索赔、损害或其他责任承担责任。
  */
 
-namespace Psc\Drive\Stream;
+namespace Psc\Drive\Laravel\Coroutine\Database;
 
-use function serialize;
-use function spl_object_hash;
+use Closure;
+use Illuminate\Database\Connection;
+use Illuminate\Database\Connectors\ConnectionFactory;
+use Illuminate\Database\MariaDbConnection;
+use Illuminate\Database\MySqlConnection;
+use Illuminate\Database\PostgresConnection;
+use Illuminate\Database\SQLiteConnection;
+use Illuminate\Database\SqlServerConnection;
+use InvalidArgumentException;
+use PDO;
 
-class Command
+class Factory extends ConnectionFactory
 {
     /**
-     * @var string
+     * Create a new connection instance.
+     *
+     * @param string      $driver
+     * @param PDO|Closure $connection
+     * @param string      $database
+     * @param string      $prefix
+     * @param array       $config
+     * @return SQLiteConnection|MariaDbConnection|MySqlConnection|PostgresConnection|SqlServerConnection|Connection
+     *
      */
-    public readonly string $id;
-
-    /**
-     * @var mixed
-     */
-    public mixed $result;
-
-    /**
-     * @param string $name
-     * @param array  $arguments
-     * @param array  $options
-     */
-    public function __construct(
-        public readonly string $name,
-        public readonly array  $arguments = [],
-        public readonly array  $options = [],
-    ) {
-        $this->id = spl_object_hash($this);
-    }
-
-    /**
-     * @param mixed $result
-     * @return void
-     */
-    public function setResult(mixed $result): void
+    protected function createConnection($driver, $connection, $database, $prefix = '', array $config = []): SQLiteConnection|MariaDbConnection|MySqlConnection|PostgresConnection|SqlServerConnection|Connection
     {
-        $this->result = $result;
-    }
-
-    /**
-     * @return string
-     */
-    public function __toString(): string
-    {
-        return serialize($this);
+        return match ($driver) {
+            'mysql' => new \Psc\Drive\Laravel\Coroutine\MySQL\Connection($connection, $database, $prefix, $config),
+            'mariadb' => new MariaDbConnection($connection, $database, $prefix, $config),
+            'pgsql' => new PostgresConnection($connection, $database, $prefix, $config),
+            'sqlite' => new SQLiteConnection($connection, $database, $prefix, $config),
+            'sqlsrv' => new SqlServerConnection($connection, $database, $prefix, $config),
+            default => throw new InvalidArgumentException("Unsupported driver [{$driver}]."),
+        };
     }
 }

@@ -238,7 +238,7 @@ $guide = new class (
      */
     private function addThread(): void
     {
-        $runtime                                    = $this->task->run($this->server);
+        $runtime                                   = $this->task->run($this->server);
         $this->runtimes[\spl_object_hash($runtime)] = $runtime;
 
         $runtime->finally(function () use ($runtime) {

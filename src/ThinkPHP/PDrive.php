@@ -54,10 +54,9 @@ use function P\onSignal;
 use function P\run;
 use function posix_mkfifo;
 use function putenv;
+use function root_path;
 use function sprintf;
 use function unserialize;
-
-use function root_path;
 
 use const PHP_BINARY;
 use const SIGINT;
