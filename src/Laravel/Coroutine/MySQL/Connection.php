@@ -36,6 +36,7 @@ namespace Psc\Drive\Laravel\Coroutine\MySQL;
 
 use Amp\Mysql\MysqlConfig;
 use Amp\Mysql\MysqlConnectionPool;
+use Amp\Mysql\MysqlStatement;
 use Amp\Mysql\MysqlTransaction;
 use Closure;
 use Exception;
@@ -203,15 +204,20 @@ class Connection extends MySqlConnection
      * @param bool   $useReadPdo
      * @return array
      */
-    public function select($query, $bindings = [], $useReadPdo = true): mixed
+    public function select($query, $bindings = [], $useReadPdo = true): array
     {
         return $this->run($query, $bindings, function ($query, $bindings) use ($useReadPdo) {
             if ($this->pretending()) {
                 return [];
             }
 
-            $statement = $this->pool->prepare($query);
-            return $statement->execute($this->prepareBindings($bindings));
+            $result        = [];
+            $selectRequest = $this->getPoolStatement($query)->execute($this->prepareBindings($bindings));
+            foreach ($selectRequest as $row) {
+                $result[] = $row;
+            }
+
+            return $result;
         });
     }
 
@@ -248,7 +254,7 @@ class Connection extends MySqlConnection
                 return [];
             }
 
-            $statement = $this->pool->prepare($query);
+            $statement = $this->getPoolStatement($query);
             $result    = $statement->execute($this->prepareBindings($bindings));
             $sets      = [];
 
@@ -291,13 +297,22 @@ class Connection extends MySqlConnection
             // 对于更新或删除语句，我们想要获取受影响的行数
             // 通过该语句并将其返回给开发人员。我们首先需要
             // 执行该语句，然后我们将使用 PDO 来获取受影响的内容。
-            $statement = $this->pool->prepare($query);
+            $statement = $this->getPoolStatement($query);
             $result    = $statement->execute($this->prepareBindings($bindings));
             $this->recordsHaveBeenModified(
                 ($count = $result->getRowCount()) > 0
             );
             return $count;
         });
+    }
+
+    /**
+     * @param string $query
+     * @return MysqlStatement
+     */
+    private function getPoolStatement(string $query): MysqlStatement
+    {
+        return $this->getTransaction()?->prepare($query) ?? $this->pool->prepare($query);
     }
 
     /**
