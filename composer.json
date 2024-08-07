@@ -30,7 +30,8 @@
     "illuminate/container": "^11.15",
     "topthink/framework": "^8.0",
     "friendsofphp/php-cs-fixer": "^3.59",
-    "laravel/framework": "^11.16"
+    "laravel/framework": "^11.16",
+    "workerman/webman-framework": "^1.5"
   },
   "extra": {
     "laravel": {
