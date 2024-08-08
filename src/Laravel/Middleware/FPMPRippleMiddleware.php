@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php
 /*
  * Copyright (c) 2023-2024.
  *
@@ -32,46 +32,28 @@
  * 由于软件或软件的使用或其他交易而引起的任何索赔、损害或其他责任承担责任。
  */
 
-namespace Psc\Drive\Utils;
+namespace Psc\Drive\Laravel\Middleware;
 
-use function str_pad;
+use Closure;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use P\System;
 
-trait Console
+/**
+ *
+ */
+class FPMPRippleMiddleware
 {
     /**
-     * @param array  $row
-     * @param string $type
-     * @return string
+     * @param Request $request
+     * @param Closure $next
+     * @return Response
      */
-    private function formatRow(array $row, string $type = ''): string
+    public function handle(Request $request, Closure $next): Response
     {
-        $output    = '';
-        $colorCode = $this->getColorCode($type);
-        foreach ($row as $col) {
-            $output .= str_pad("{$colorCode}{$col}\033[0m", 40);
-        }
-        return $output . "\n";
-    }
-
-    /**
-     * @param string $item
-     * @return string
-     */
-    private function formatList(string $item): string
-    {
-        return "  - $item\n";
-    }
-
-    /**
-     * @param string $type
-     * @return string
-     */
-    private function getColorCode(string $type): string
-    {
-        return match ($type) {
-            'info' => "\033[1;36m",
-            'thread' => "\033[1;33m",
-            default => "",
-        };
+        $task = System::Process()->task(function () {
+        });
+        $task->run();
+        return $next($request);
     }
 }

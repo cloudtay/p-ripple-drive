@@ -34,10 +34,13 @@
 
 namespace Psc\Drive\Laravel;
 
+use Illuminate\Contracts\Container\BindingResolutionException;
+use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Support\Env;
 use Illuminate\Support\ServiceProvider;
 use Psc\Drive\Laravel\Coroutine\Database\Factory;
-
+use Psc\Drive\Laravel\Middleware\FPMPRippleMiddleware;
+use Psc\Drive\Laravel\Middleware\IsolationMiddleware;
 use function in_array;
 
 class Provider extends ServiceProvider
@@ -46,14 +49,43 @@ class Provider extends ServiceProvider
      * Register any application services.
      *
      * @return void
+     * @throws BindingResolutionException
      */
     public function register(): void
     {
         $this->commands([PDrive::class]);
         $this->commands([PDriveLast::class]);
-        $coroutineMySQL = Env::get('P_COROUTINE_DATABASE');
-        if (in_array($coroutineMySQL, [true, 'true', 1, '1', 'on'], true)) {
-            $this->app->singleton('db.factory', fn () => new Factory($this->app));
+
+        // 配置项: 协程数据库模式
+        $P_COROUTINE_DATABASE = Env::get('P_COROUTINE_DATABASE');
+
+        // 配置项: 安全隔离模式
+        $P_ISOLATION = Env::get('P_ISOLATION');
+
+        // 配置项: 协程FPM模式
+        $P_COROUTINE_FPM = Env::get('P_COROUTINE_FPM');
+
+        // 开始注册服务
+        $kernel = $this->app->make(Kernel::class);
+        if ($this->isTrue($P_COROUTINE_DATABASE)) {
+            $this->app->singleton('db.factory', fn() => new Factory($this->app));
         }
+
+        if ($this->isTrue($P_ISOLATION)) {
+            $kernel->prependMiddleware(IsolationMiddleware::class);
+        }
+
+        if ($this->isTrue($P_COROUTINE_FPM) && PHP_SAPI !== 'cli') {
+            $kernel->prependMiddleware(FPMPRippleMiddleware::class);
+        }
+    }
+
+    /**
+     * @param mixed $value
+     * @return bool
+     */
+    private function isTrue(mixed $value): bool
+    {
+        return in_array($value, [true, 'true', 1, '1', 'on'], true);
     }
 }

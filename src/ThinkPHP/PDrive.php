@@ -38,7 +38,7 @@ use JetBrains\PhpStorm\NoReturn;
 use P\System;
 use Psc\Core\Coroutine\Promise;
 use Psc\Core\Stream\Stream;
-use Psc\Drive\Stream\Frame;
+use Psc\Drive\Library\Stream\Frame;
 use Psc\Std\Stream\Exception\ConnectionException;
 use think\console\Command;
 use think\console\Input;
@@ -99,19 +99,13 @@ class PDrive extends Command
      */
     private Stream $serialInputStream;
 
-    /**
-     * @var Frame
-     */
+    /*** @var Frame */
     private Frame $frame;
 
-    /**
-     * @var Input
-     */
+    /*** @var Input */
     private Input $_input;
 
-    /**
-     * @var Output
-     */
+    /*** @var Output */
     private Output $_output;
 
     /**
@@ -297,7 +291,7 @@ class PDrive extends Command
         array  $arguments = [],
         array  $options = []
     ): Promise {
-        $command = new \Psc\Drive\Stream\Command(
+        $command = new \Psc\Drive\Library\Stream\Command(
             $name,
             $arguments,
             $options
@@ -314,10 +308,10 @@ class PDrive extends Command
     }
 
     /**
-     * @param \Psc\Drive\Stream\Command $command
+     * @param \Psc\Drive\Library\Stream\Command $command
      * @return void
      */
-    private function onCommand(\Psc\Drive\Stream\Command $command): void
+    private function onCommand(\Psc\Drive\Library\Stream\Command $command): void
     {
         if (isset($this->queue[$command->id])) {
             $this->queue[$command->id]['resolve']($command->result);

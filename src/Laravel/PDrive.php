@@ -40,7 +40,7 @@ use P\System;
 use Psc\Core\Coroutine\Promise;
 use Psc\Core\Output;
 use Psc\Core\Stream\Stream;
-use Psc\Drive\Stream\Frame;
+use Psc\Drive\Library\Stream\Frame;
 use Psc\Std\Stream\Exception\ConnectionException;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -303,7 +303,7 @@ class PDrive extends Command
         array  $arguments = [],
         array  $options = []
     ): Promise {
-        $command = new \Psc\Drive\Stream\Command(
+        $command = new \Psc\Drive\Library\Stream\Command(
             $name,
             $arguments,
             $options
@@ -320,10 +320,10 @@ class PDrive extends Command
     }
 
     /**
-     * @param \Psc\Drive\Stream\Command $command
+     * @param \Psc\Drive\Library\Stream\Command $command
      * @return void
      */
-    private function onCommand(\Psc\Drive\Stream\Command $command): void
+    private function onCommand(\Psc\Drive\Library\Stream\Command $command): void
     {
         if (isset($this->queue[$command->id])) {
             $this->queue[$command->id]['resolve']($command->result);

@@ -32,41 +32,46 @@
  * 由于软件或软件的使用或其他交易而引起的任何索赔、损害或其他责任承担责任。
  */
 
-namespace Psc\Drive\Laravel\Coroutine\Database;
+namespace Psc\Drive\Library;
 
-use Closure;
-use Illuminate\Database\Connection;
-use Illuminate\Database\Connectors\ConnectionFactory;
-use Illuminate\Database\MariaDbConnection;
-use Illuminate\Database\MySqlConnection;
-use Illuminate\Database\PostgresConnection;
-use Illuminate\Database\SQLiteConnection;
-use Illuminate\Database\SqlServerConnection;
-use InvalidArgumentException;
-use PDO;
+use function str_pad;
 
-class Factory extends ConnectionFactory
+trait Console
 {
     /**
-     * Create a new connection instance.
-     *
-     * @param string      $driver
-     * @param PDO|Closure $connection
-     * @param string      $database
-     * @param string      $prefix
-     * @param array       $config
-     * @return SQLiteConnection|MariaDbConnection|MySqlConnection|PostgresConnection|SqlServerConnection|Connection
-     *
+     * @param array  $row
+     * @param string $type
+     * @return string
      */
-    protected function createConnection($driver, $connection, $database, $prefix = '', array $config = []): SQLiteConnection|MariaDbConnection|MySqlConnection|PostgresConnection|SqlServerConnection|Connection
+    private function formatRow(array $row, string $type = ''): string
     {
-        return match ($driver) {
-            'mysql' => new MySQL\Connection($connection, $database, $prefix, $config),
-            'mariadb' => new MariaDbConnection($connection, $database, $prefix, $config),
-            'pgsql' => new PostgresConnection($connection, $database, $prefix, $config),
-            'sqlite' => new SQLiteConnection($connection, $database, $prefix, $config),
-            'sqlsrv' => new SqlServerConnection($connection, $database, $prefix, $config),
-            default => throw new InvalidArgumentException("Unsupported driver [{$driver}]."),
+        $output    = '';
+        $colorCode = $this->getColorCode($type);
+        foreach ($row as $col) {
+            $output .= str_pad("{$colorCode}{$col}\033[0m", 40);
+        }
+        return $output . "\n";
+    }
+
+    /**
+     * @param string $item
+     * @return string
+     */
+    private function formatList(string $item): string
+    {
+        return "  - $item\n";
+    }
+
+    /**
+     * @param string $type
+     * @return string
+     */
+    private function getColorCode(string $type): string
+    {
+        return match ($type) {
+            'info' => "\033[1;36m",
+            'thread' => "\033[1;33m",
+            default => "",
         };
     }
 }

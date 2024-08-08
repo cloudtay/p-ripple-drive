@@ -32,14 +32,13 @@
  * 由于软件或软件的使用或其他交易而引起的任何索赔、损害或其他责任承担责任。
  */
 
-namespace Psc\Drive\Laravel\Coroutine\MySQL;
+namespace Psc\Drive\Laravel\Coroutine\Database\MySQL;
 
 use Amp\Mysql\MysqlConfig;
 use Amp\Mysql\MysqlConnectionPool;
 use Amp\Mysql\MysqlStatement;
 use Amp\Mysql\MysqlTransaction;
 use Closure;
-use Exception;
 use Fiber;
 use Generator;
 use Illuminate\Database\MySqlConnection;
@@ -91,6 +90,7 @@ class Connection extends MySqlConnection
                     'database' => 'db',
                     default => $key
                 };
+
                 $dsn .= "{$key}={$value} ";
             }
         }
@@ -106,6 +106,9 @@ class Connection extends MySqlConnection
      */
     public function beginTransaction(): void
     {
+        if ($this->getTransaction()) {
+            return;
+        }
         $transaction = $this->pool->beginTransaction();
         ;
         if ($fiber = Fiber::getCurrent()) {
@@ -117,20 +120,13 @@ class Connection extends MySqlConnection
 
     /**
      * @return void
-     * @throws Exception
      */
     public function commit(): void
     {
-        if ($fiber = Fiber::getCurrent()) {
-            $key = spl_object_hash($fiber);
-        } else {
-            $key = 'main';
-        }
-
+        $key = ($fiber = Fiber::getCurrent()) ? spl_object_hash($fiber) : 'main';
         if (!$transaction = $this->fiber2transaction[$key] ?? null) {
-            throw new Exception('Transaction not found');
+            return;
         }
-
         $transaction->commit();
         unset($this->fiber2transaction[$key]);
     }
@@ -138,20 +134,13 @@ class Connection extends MySqlConnection
     /**
      * @param $toLevel
      * @return void
-     * @throws Exception
      */
     public function rollBack($toLevel = null): void
     {
-        if ($fiber = Fiber::getCurrent()) {
-            $key = spl_object_hash($fiber);
-        } else {
-            $key = 'main';
-        }
-
+        $key = ($fiber = Fiber::getCurrent()) ? spl_object_hash($fiber) : 'main';
         if (!$transaction = $this->fiber2transaction[$key] ?? null) {
-            throw new Exception('Transaction not found');
+            return;
         }
-
         $transaction->rollback();
         unset($this->fiber2transaction[$key]);
     }
@@ -178,24 +167,6 @@ class Connection extends MySqlConnection
             $this->rollBack();
             throw $e;
         }
-    }
-
-    /**
-     * @return MysqlTransaction|null
-     */
-    private function getTransaction(): MysqlTransaction|null
-    {
-        if ($fiber = Fiber::getCurrent()) {
-            $key = spl_object_hash($fiber);
-        } else {
-            $key = 'main';
-        }
-
-        if (!$transaction = $this->fiber2transaction[$key] ?? null) {
-            return null;
-        }
-
-        return $transaction;
     }
 
     /**
@@ -329,5 +300,23 @@ class Connection extends MySqlConnection
     public function reconnectIfMissingConnection()
     {
         //TODO: 无事可做
+    }
+
+    /**
+     * @return MysqlTransaction|null
+     */
+    private function getTransaction(): MysqlTransaction|null
+    {
+        if ($fiber = Fiber::getCurrent()) {
+            $key = spl_object_hash($fiber);
+        } else {
+            $key = 'main';
+        }
+
+        if (!$transaction = $this->fiber2transaction[$key] ?? null) {
+            return null;
+        }
+
+        return $transaction;
     }
 }

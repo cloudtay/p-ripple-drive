@@ -32,50 +32,28 @@
  * 由于软件或软件的使用或其他交易而引起的任何索赔、损害或其他责任承担责任。
  */
 
-namespace Psc\Drive\Stream;
+namespace Psc\Drive\Laravel\Middleware;
 
-use function serialize;
-use function spl_object_hash;
+use Closure;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Routing\Route;
 
-class Command
+use function app;
+
+class IsolationMiddleware
 {
     /**
-     * @var string
+     * @param Request $request
+     * @param Closure $next
+     * @return Response
      */
-    public readonly string $id;
-
-    /**
-     * @var mixed
-     */
-    public mixed $result;
-
-    /**
-     * @param string $name
-     * @param array  $arguments
-     * @param array  $options
-     */
-    public function __construct(
-        public readonly string $name,
-        public readonly array  $arguments = [],
-        public readonly array  $options = [],
-    ) {
-        $this->id = spl_object_hash($this);
-    }
-
-    /**
-     * @param mixed $result
-     * @return void
-     */
-    public function setResult(mixed $result): void
+    public function handle(Request $request, Closure $next): Response
     {
-        $this->result = $result;
-    }
-
-    /**
-     * @return string
-     */
-    public function __toString(): string
-    {
-        return serialize($this);
+        $route = $request->route();
+        if ($route instanceof Route) {
+            $route->controller = app($route->getControllerClass());
+        }
+        return $next($request);
     }
 }
